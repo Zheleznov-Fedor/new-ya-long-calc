@@ -1,0 +1,20 @@
+syntax = "proto3"; // версия proto файлов
+package geometry; // название пакета
+option go_package = "github.com/Zheleznov-Fedor/new-ya-long-calc";
+
+// Сообщение, описывающее параметры операции
+message OperationRequest {
+    int32 id = 1;
+    float a = 2;
+    float b = 3;
+    string oper = 4;
+}
+
+message OperationResult {
+    int32 id = 1;
+    float result = 2;
+}
+
+service OperationService {
+    rpc Calc (OperationRequest) returns (OperationResult); 
+}

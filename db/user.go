@@ -25,7 +25,7 @@ func CreateUsersTable(ctx context.Context, db *sql.DB) error {
 		usersTable = `
 			CREATE TABLE "users" (
 			"id"	INTEGER NOT NULL,
-			"login"	TEXT NOT NULL,
+			"login"	TEXT NOT NULL UNIQUE,
 			"pass_hash"	TEXT NOT NULL,
 			PRIMARY KEY("id" AUTOINCREMENT)
 		);`

@@ -24,8 +24,13 @@ const hmacSampleSecret = "super_secret_signature"
 
 func expressionHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := context.TODO()
-	c, _ := r.Cookie("token")
-	tokenString := c.Value
+	c, err := r.Cookie("token")
+	var tokenString string
+	if err != nil {
+		tokenString = r.Header.Get("auth-token")
+	} else {
+		tokenString = c.Value
+	}
 	tokenFromString, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			panic(fmt.Errorf("unexpected signing method: %v", token.Header["alg"]))
@@ -166,20 +171,23 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		Value:   tokenString,
 		Expires: time.Unix(expirationTime, 0),
 	})
+	fmt.Fprintf(w, tokenString)
 }
 
 func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := r.Cookie("token")
+		var tokenString string
 		if err != nil {
 			if err == http.ErrNoCookie {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				tokenString = r.Header.Get("auth-token")
+			} else {
+				http.Error(w, "Bad Request", http.StatusBadRequest)
 				return
 			}
-			http.Error(w, "Bad Request", http.StatusBadRequest)
-			return
+		} else {
+			tokenString = c.Value
 		}
-		tokenString := c.Value
 		tokenFromString, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				panic(fmt.Errorf("unexpected signing method: %v", token.Header["alg"]))
@@ -221,18 +229,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = db.CreateUsersTable(ctx, database)
-	if err != nil {
-		panic(err)
-	}
-	err = db.CreateExpressionsTable(ctx, database)
-	if err != nil {
-		panic(err)
-	}
-	err = db.CreateOpersTable(ctx, database)
-	if err != nil {
-		panic(err)
-	}
+	_ = db.CreateUsersTable(ctx, database)
+	_ = db.CreateExpressionsTable(ctx, database)
+	_ = db.CreateOpersTable(ctx, database)
 
 	ready, _ := db.SelectOperationsToCalc(ctx, database)
 	for _, oper := range ready {

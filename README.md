@@ -1,6 +1,6 @@
 # Установка
-0. Скачиваем библиотеки
-   `go mod install`  
+0. Подготавливаемся  
+   `go mod tidy`  
 1. Для начала настроим настроим систему. 
 В файле `.env` можно настроить следующие параметры:
     - TIME_"operation"  
@@ -45,12 +45,16 @@
     "login": ,
     "password":
   }
+  Вернёт JWT токен и попробует сохранить в куки(при использовании сопутствующего ПО).
+  В curl-е будем передавать в виде header-а "auth-token"
 - Добавить новое выражения    
   POST /expr  
-  Content-Type: application/json    
+  Content-Type: application/json  
+  auth-token <JWT токен>    
   <Математическое выражение>
 - Проверить готовность  
-  GET /expr/<идентификатор выражения>
+  GET /expr/<идентификатор выражения>  
+  auth-token <JWT токен> 
 
 # Примеры
 - Регистрация:
@@ -64,20 +68,23 @@
   ```
   curl -X POST \
   -H "Content-Type: application/json" \
-  -d '{"login": "zhefed", "password": "ya-eda"}' \
+  -d '{"login": "zhefed", "password": "ya-calc"}' \
   http://localhost:8080/login
   ```
+  Вернётся токен, сохраним его для следующих шагов. В конце может стоять знак процента, его копировать не надо.
 - Положить новое задание:
   ```
   curl -X POST \
   -H "Content-Type: application/json" \
-  -d '{"str_expr": "2 * 3 + 5 / 2"}' \
+  -H "auth-token: <токен полученный ранее>" \
+  -d '"2 * 3 + 5 / 2"' \
   http://localhost:8080/expr
   ```
   ```
   curl -X POST \
   -H "Content-Type: application/json" \
-  -d '{"str_expr": "2*3 + 5.98/2 - 0.001 + 21.1"}' \
+  -H "auth-token: <токен полученный ранее>" \
+  -d '"2*3 + 5.98/2 - 0.001 + 21.1"' \
   http://localhost:8080/expr
   ```
 - Проверить готовность:
